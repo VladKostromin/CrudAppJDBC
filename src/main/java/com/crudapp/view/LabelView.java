@@ -1,36 +1,23 @@
 package com.crudapp.view;
 
 import com.crudapp.controller.LabelController;
-import com.crudapp.controller.PostController;
 import com.crudapp.exceptions.NotFoundException;
-import com.crudapp.exceptions.StatusDeletedException;
 import com.crudapp.model.Label;
-import com.crudapp.model.Post;
-import com.crudapp.model.Writer;
-import com.crudapp.repository.LabelRepository;
-import com.crudapp.repository.PostRepository;
-import com.crudapp.repository.jdbc.JdbcLabelRepositoryImpl;
-import com.crudapp.repository.jdbc.JdbcPostRepositoryImpl;
 
-import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
 public class LabelView {
-    private final Connection connection;
     private final Scanner scanner;
+    private final LabelController labelController;
 
-    public LabelView(Connection connection) {
-        this.connection = connection;
+    public LabelView(LabelController labelController) {
         this.scanner = new Scanner(System.in);
+        this.labelController = labelController;
     }
 
     public void run() {
-        LabelRepository labelRepository = new JdbcLabelRepositoryImpl(connection);
-        LabelController labelController = new LabelController(labelRepository);
-        PostRepository postRepository = new JdbcPostRepositoryImpl(connection);
-        PostController postController = new PostController(postRepository);
         boolean flag = true;
         int inputOption;
         while (flag) {
@@ -44,27 +31,9 @@ public class LabelView {
             scanner.nextLine();
             switch (inputOption) {
                 case 1 :
-                    System.out.print("Введите id поста для создания Label: ");
-                    Long postId;
-                    try {
-                        postId = scanner.nextLong();
-                    } catch (Exception e) {
-                        System.out.println("Неверный ввод");
-                        break;
-                    }
-                    scanner.nextLine();
-                    try {
-                        postController.getPost(postId);
-                    } catch (NotFoundException e) {
-                        System.out.println(e.getMessage());
-                        break;
-                    } catch (StatusDeletedException e) {
-                        System.out.println(e.getMessage());
-                        break;
-                    }
                     System.out.print("Введите название Label: ");
                     String name = scanner.nextLine();
-                    labelController.createLabel(name, postId);
+                    labelController.createLabel(name);
                     System.out.println("Label создан");
                     break;
                 case 2 :
@@ -106,8 +75,11 @@ public class LabelView {
                     }
                     System.out.println("Введите новое название: ");
                     String labelNameForUpdate = scanner.nextLine();
-                    labelForUpdate.setName(labelNameForUpdate);
-                    labelController.updateLabel(labelForUpdate);
+                    try {
+                        labelController.updateLabel(labelNameForUpdate, labelIdForUpdate);
+                    } catch (NotFoundException e) {
+                        System.out.println(e.getMessage());
+                    }
                     System.out.println("Обновленный Label: ");
                     System.out.println(labelController);
                     break;
@@ -131,7 +103,7 @@ public class LabelView {
                     System.out.println("Вы уверенны?(Y/N):");
                     String confirmation = scanner.nextLine();
                     if(confirmation.equalsIgnoreCase("y")) {
-                        labelController.deleteById(labelIdForDelete);
+                        labelController.deleteLabel(labelIdForDelete);
                     } else if (confirmation.equalsIgnoreCase("n")) {
                         System.out.println("Отмена");
                         break;

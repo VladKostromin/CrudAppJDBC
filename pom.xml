@@ -14,7 +14,7 @@
         <lombok.version>1.18.24</lombok.version>
         <mysql.version>8.0.19</mysql.version>
         <junit.version>5.10.0</junit.version>
-        <mockito.version>5.5.0</mockito.version>
+        <mockito.version>5.2.0</mockito.version>
         <liquibase.propertyFile>${project.basedir}/src/main/resources/liquibase.properties</liquibase.propertyFile>
     </properties>
 

@@ -1,113 +1,91 @@
 package com.crudapp.repository.jdbc;
 
-import com.crudapp.exceptions.NotFoundException;
 import com.crudapp.model.Label;
 import com.crudapp.repository.LabelRepository;
+import com.crudapp.utils.JdbcUtils;
 import lombok.SneakyThrows;
 
-import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
 public class JdbcLabelRepositoryImpl implements LabelRepository {
+    private final String FIND_BY_ID_SQL = "SELECT * FROM labels WHERE id = ?";
+    private final String GET_ALL_SQL = "SELECT * FROM labels";
+    private final String SAVE_SQL = "INSERT INTO labels (name) VALUES (?)";
+    private final String UPDATE_SQL = "UPDATE labels SET name = ?";
+    private final String DELETE_SQL = "DELETE FROM labels WHERE id = ?";
 
-    private Connection connection;
-
-    public JdbcLabelRepositoryImpl(Connection connection) {
-        this.connection = connection;
+    @SneakyThrows
+    private Label mapResultSetToLabel(ResultSet resultSet) {
+        Long id = resultSet.getLong("id");
+        Label label = Label.builder()
+                .id(id)
+                .name(resultSet.getString("name"))
+                .build();
+        return label;
     }
 
     @Override
+    @SneakyThrows
     public Label findById(Long id) {
-        Statement statement = null;
-        ResultSet resultSet = null;
-        Label resultLabel = null;
-        try {
-            String SQL = "SELECT * FROM crudtest.labels WHERE id = " + id;
-            statement = connection.createStatement();
-            resultSet = statement.executeQuery(SQL);
-            resultLabel = Label.builder()
-                    .id(resultSet.getLong("id"))
-                    .name(resultSet.getString("name"))
-                    .postId(resultSet.getLong("post_id"))
-                    .build();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                statement.close();
-                resultSet.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return resultLabel;
+       try(PreparedStatement preparedStatement = JdbcUtils.getPreparedStatement(FIND_BY_ID_SQL)) {
+           preparedStatement.setLong(1, id);
+           ResultSet resultSet = preparedStatement.executeQuery();
+           return mapResultSetToLabel(resultSet);
+       }
     }
 
     @Override
     @SneakyThrows
     public List<Label> getAll() {
         List<Label> labels = new ArrayList<>();
-        String SQL = "SELECT * FROM crudtest.labels";
-        Statement statement = connection.createStatement();
-        ResultSet resultSet = statement.executeQuery(SQL);
-        while (resultSet.next()) {
-            labels.add(Label.builder()
-                    .id(resultSet.getLong("id"))
-                    .name(resultSet.getString("name"))
-                    .postId(resultSet.getLong("post_id"))
-                    .build());
+        try (PreparedStatement preparedStatement = JdbcUtils.getPreparedStatement(GET_ALL_SQL)) {
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                labels.add(mapResultSetToLabel(resultSet));
+            }
+            return labels;
         }
-        statement.close();
-        resultSet.close();
-        return labels;
 
     }
 
     @Override
+    @SneakyThrows
     public Label save(Label label) {
-        String SQL = "INSERT INTO crudtest.labels (name, post_id) VALUES ('"
-                + label.getName() + "', "
-                + label.getPostId() + ")";
-        Statement statement = null;
-        int insertFlag = 0;
-        try {
-            statement = connection.createStatement();
-            insertFlag = statement.executeUpdate(SQL);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                statement.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
+        try(PreparedStatement preparedStatement = JdbcUtils.getPreparedStatementWithKeys(SAVE_SQL)) {
+            preparedStatement.setString(1, label.getName());
+            int affectedRows = preparedStatement.executeUpdate();
+            if(affectedRows > 0) {
+                try(ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
+                    if(generatedKeys.next()) {
+                        Long generatedId = generatedKeys.getLong(1);
+                        label.setId(generatedId);
+                        return label;
+                    }
+                }
             }
+            return null;
         }
-
-        return insertFlag == 0 ? null : label;
     }
 
     @Override
     @SneakyThrows
     public Label update(Label label) {
-        String SQL = "UPDATE crudtest.labels SET name = '" + label.getName() + "' " + "WHERE id = " + label.getId() + ";";
-        Statement statement = connection.createStatement();
-        int updateFlag = statement.executeUpdate(SQL);
-        statement.close();
-        return updateFlag == 0 ? null : findById(label.getId());
+        try(PreparedStatement preparedStatement = JdbcUtils.getPreparedStatement(UPDATE_SQL)) {
+            preparedStatement.executeUpdate();
+            return label;
+        }
     }
 
     @Override
     @SneakyThrows
     public void deleteById(Long id) {
-        String SQL = "DELETE FROM crudtest.labels WHERE id = " + id;
-        Statement statement = connection.createStatement();
-        statement.executeUpdate(SQL);
-        statement.close();
+        try(PreparedStatement preparedStatement = JdbcUtils.getPreparedStatement(DELETE_SQL)) {
+            preparedStatement.setLong(1, id);
+            preparedStatement.executeUpdate();
+        }
     }
 
 }

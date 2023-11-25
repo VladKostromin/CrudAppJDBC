@@ -1,44 +1,42 @@
 package com.crudapp.controller;
 
 import com.crudapp.exceptions.NotFoundException;
-import com.crudapp.model.Label;
-import com.crudapp.model.Post;
 import com.crudapp.model.Writer;
-import com.crudapp.repository.WriterRepository;
+import com.crudapp.services.WriterService;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class WriterController {
-    private WriterRepository writerRepository;
+    private final WriterService writerService;
 
-    public WriterController(WriterRepository writerRepository) {
-        this.writerRepository = writerRepository;
+    public WriterController(WriterService writerService) {
+        this.writerService = writerService;
     }
 
     public Writer getWriter(Long id) throws NotFoundException{
-        Writer writer = writerRepository.findById(id);
-        if(writer == null) throw new NotFoundException("Writer not exist");
-        return writer;
+        return writerService.getWriterByID(id);
     }
 
-    public Writer createWriter(String firstName,String lastName) {
-        return writerRepository.save(Writer.builder()
+    public Writer createNewWriter(String firstName,String lastName) {
+        return writerService.createWriter(Writer.builder()
                 .firstName(firstName)
                 .lastName(lastName)
                 .posts(new ArrayList<>())
                 .build());
     }
-    public Writer updateWriter(String name, String lastname, Long id) throws NotFoundException {
-        Writer writer = getWriter(id);
-        writer.setFirstName(name);
-        writer.setLastName(lastname);
-        return writerRepository.update(writer);
+    public Writer updateWriter(String firstName, String lastname, Long id) throws NotFoundException {
+        return writerService.updateWriter(Writer.builder()
+                .id(id)
+                .firstName(firstName)
+                .lastName(lastname)
+                .posts(new ArrayList<>())
+                .build());
     }
     public void deleteWriter(Long id) {
-        writerRepository.deleteById(id);
+        writerService.deleteWriterByID(id);
     }
     public List<Writer> getAllWriters(){
-        return writerRepository.getAll();
+        return writerService.getAllWriters();
     }
 }

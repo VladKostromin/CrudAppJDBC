@@ -8,8 +8,10 @@ import java.util.List;
 @Getter
 @Setter
 @ToString
+@EqualsAndHashCode
+@NoArgsConstructor
+@AllArgsConstructor
 public class Writer {
-    @Setter(AccessLevel.NONE)
     private Long id;
     private String firstName;
     private String lastName;

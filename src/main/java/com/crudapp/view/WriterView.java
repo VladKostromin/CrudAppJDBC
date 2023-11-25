@@ -3,26 +3,21 @@ package com.crudapp.view;
 import com.crudapp.controller.WriterController;
 import com.crudapp.exceptions.NotFoundException;
 import com.crudapp.model.Writer;
-import com.crudapp.repository.WriterRepository;
-import com.crudapp.repository.jdbc.JdbcWriterRepositoryImpl;
 
-import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
 public class WriterView {
-    private final Connection connection;
     private final Scanner scanner;
+    private final WriterController writerController;
 
-    public WriterView(Connection connection) {
-        this.connection = connection;
+    public WriterView(WriterController writerController) {
         this.scanner = new Scanner(System.in);
+        this.writerController = writerController;
     }
 
     public void run() {
-        WriterRepository writerRepository = new JdbcWriterRepositoryImpl(connection);
-        WriterController writerController = new WriterController(writerRepository);
         boolean flag = true;
         int inputOption;
         while (flag) {
@@ -40,7 +35,7 @@ public class WriterView {
                     String firstName = scanner.nextLine();
                     System.out.print("Введите фамилиюю: ");
                     String lastName = scanner.nextLine();
-                    writerController.createWriter(firstName, lastName);
+                    writerController.createNewWriter(firstName, lastName);
                     System.out.println("Writer успешно создан!");
                     break;
                 case 2 :

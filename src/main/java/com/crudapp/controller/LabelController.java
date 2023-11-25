@@ -2,40 +2,37 @@ package com.crudapp.controller;
 
 import com.crudapp.exceptions.NotFoundException;
 import com.crudapp.model.Label;
-import com.crudapp.repository.LabelRepository;
+import com.crudapp.services.LabelService;
 
 import java.util.List;
 
 public class LabelController {
-    private final LabelRepository labelRepository;
+    private final LabelService labelService;
 
-    public LabelController(LabelRepository labelRepository) {
-        this.labelRepository = labelRepository;
+    public LabelController(LabelService labelService) {
+        this.labelService = labelService;
     }
 
     public Label getLabel(Long id) throws NotFoundException {
-        Label label = labelRepository.findById(id);
-        if(label == null) throw new NotFoundException("Label not found");
-        return label;
+        return labelService.getLabelByID(id);
     }
 
-    public Label createLabel(String labelName, Long postId) {
-        Label label = Label.builder()
+    public Label createLabel(String labelName) {
+        return labelService.createLabel(Label.builder()
                 .name(labelName)
-                .postId(postId)
-                .build();
-        labelRepository.save(label);
-        return label;
+                .build());
     }
-    public Label updateLabel(Label label) {
-        Label labelToUpdate = labelRepository.update(label);
-        return labelToUpdate;
+    public Label updateLabel(String labelName, Long labelId) throws NotFoundException {
+        return labelService.updateLabel(Label.builder()
+                .id(labelId)
+                .name(labelName)
+                .build());
     }
-    public void deleteById(Long id) {
-        labelRepository.deleteById(id);
+    public void deleteLabel(Long id) {
+        labelService.deleteLabelById(id);
     }
     public List<Label> getAllLabels(){
-        return labelRepository.getAll();
+        return labelService.getAllLabels();
     }
 
 }

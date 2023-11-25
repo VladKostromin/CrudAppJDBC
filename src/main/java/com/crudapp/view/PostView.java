@@ -1,38 +1,25 @@
 package com.crudapp.view;
 
 import com.crudapp.controller.PostController;
-import com.crudapp.controller.WriterController;
 import com.crudapp.exceptions.NotFoundException;
 import com.crudapp.exceptions.StatusDeletedException;
-import com.crudapp.model.Label;
 import com.crudapp.model.Post;
-import com.crudapp.model.Writer;
-import com.crudapp.repository.PostRepository;
-import com.crudapp.repository.WriterRepository;
-import com.crudapp.repository.jdbc.JdbcPostRepositoryImpl;
-import com.crudapp.repository.jdbc.JdbcWriterRepositoryImpl;
 
-import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
 public class PostView {
-    private Connection connection;
-    private final Scanner scanner;
 
-    public PostView(Connection connection) {
-        this.connection = connection;
+    private final Scanner scanner;
+    private final PostController postController;
+
+    public PostView(PostController postController) {
+        this.postController = postController;
         this.scanner = new Scanner(System.in);
     }
 
     public void run() {
-        PostRepository postRepository = new JdbcPostRepositoryImpl(connection);
-        PostController postController = new PostController(postRepository);
-
-        WriterRepository writerRepository = new JdbcWriterRepositoryImpl(connection);
-        WriterController writerController = new WriterController(writerRepository);
-
         boolean flag = true;
         int inputOption;
 
@@ -40,9 +27,11 @@ public class PostView {
             System.out.println("1. Создать новый пост");
             System.out.println("2. Получить пост");
             System.out.println("3. Обновить существующий пост");
-            System.out.println("4. Получить все посты");
-            System.out.println("5. Удалить пост");
-            System.out.println("6. Вернутся в меню программы");
+            System.out.println("4. Добавить лейбл к посту");
+            System.out.println("5. Получить все посты");
+            System.out.println("6. Удалить пост");
+            System.out.println("7. Вернутся в меню программы");
+
             inputOption = scanner.nextInt();
             scanner.nextLine();
             switch (inputOption) {
@@ -56,15 +45,13 @@ public class PostView {
                         break;
                     }
                     scanner.nextLine();
-                    try {
-                        writerController.getWriter(writerId);
-                    } catch (NotFoundException e) {
-                        System.out.println(e.getMessage());
-                        break;
-                    }
                     System.out.println("Введите контент поста:");
                     String content = scanner.nextLine();
-                    postController.createPost(content, writerId);
+                    try {
+                        postController.createNewPost(content, writerId);
+                    } catch (NotFoundException e) {
+                        System.out.println(e.getMessage());
+                    }
                     System.out.println("Пост создан");
                     break;
                 case 2 :
@@ -104,7 +91,7 @@ public class PostView {
                     System.out.println("Введи контент для обновления: ");
                     String contentForUpdate = scanner.nextLine();
                     try {
-                        postForUpdate = postController.updatePost(contentForUpdate, postIdForUpdate);
+                        postForUpdate = postController.updatePostContent(contentForUpdate, postIdForUpdate);
                     } catch (NotFoundException e) {
                         System.out.println(e.getMessage());
                         break;
@@ -116,13 +103,21 @@ public class PostView {
                     System.out.println(postForUpdate);
                     break;
                 case 4 :
+                    System.out.print("Введите id поста для добавления Label: ");
+                    Long postIdForLabel = scanner.nextLong();
+                    scanner.nextLine();
+                    System.out.print("Введите id Label: ");
+                    Long labelId = scanner.nextLong();
+                    postController.addLabelToPost(postIdForLabel, labelId);
+                    break;
+                case 5 :
                     System.out.println("Список всех постов: ");
                     List<Post> posts = new ArrayList<>(postController.getAllPosts());
                     for (Post p : posts) {
                         System.out.println(p);
                     }
                     break;
-                case 5 :
+                case 6 :
                     System.out.print("Введите id для удаления: ");
                     Long postIdForDelete;
                     try {
@@ -145,7 +140,7 @@ public class PostView {
                         break;
                     }
                     break;
-                case 6 :
+                case 7 :
                     flag = false;
                     break;
             }
